@@ -30,6 +30,7 @@ var SOURCE = {
     search: "/api/search",
     detail: "/api/detail",
     play: "/api/play",
+    category: "/api/category", // 分类接口
   },
   headers: {
     "User-Agent": "Mozilla/5.0",
@@ -161,6 +162,58 @@ function getPlayUrl(episodeId) {
   } catch (e) {
     log.e("GetPlayUrl", "获取播放地址失败: " + e.message);
     return null;
+  }
+}
+
+// 获取分类内容函数（可选，用于分类浏览）
+function getCategoryContent(categoryId, filters, page) {
+  try {
+    filters = filters || {};
+    page = page || 1;
+
+    var url =
+      SOURCE.host +
+      SOURCE.api.category +
+      "?categoryId=" +
+      categoryId +
+      "&page=" +
+      page;
+
+    // 添加筛选条件
+    if (filters.year) {
+      url += "&year=" + filters.year;
+    }
+    if (filters.area) {
+      url += "&area=" + encodeURIComponent(filters.area);
+    }
+
+    var response = http.get(url, SOURCE.headers);
+    var data = JSON.parse(response);
+
+    var list = [];
+    if (data.list) {
+      for (var i = 0; i < data.list.length; i++) {
+        var item = data.list[i];
+        list.push({
+          id: item.id.toString(),
+          name: item.name || "",
+          cover: item.cover || "",
+          description: item.description || "",
+          year: item.year || "",
+          category: item.category || "",
+          area: item.area || "",
+        });
+      }
+    }
+
+    return {
+      list: list,
+      hasMore: data.hasMore || false,
+      currentPage: page,
+    };
+  } catch (e) {
+    log.e("GetCategory", "获取分类内容失败: " + e.message);
+    return { list: [], hasMore: false };
   }
 }
 ```
